@@ -1,0 +1,249 @@
+﻿body
+{
+}
+body {
+}
+
+h1 {
+    text-align: center;
+}
+
+.name_wrapper {
+    display:grid;
+    margin: 5px 0;
+    text-align: left;
+    width: 490px;
+}
+
+.name_wrapper_3 {
+    display: flex;
+    margin: 5px 0;
+    text-align: left;
+    width: 1000px;
+    background-color: white;
+    grid-template-columns: 450px 480px 20px
+}
+
+
+section {
+    display: inline-grid;
+    grid-template-columns: 495px 35px 495px;
+    background-color: lightcyan;
+    margin: 3px;
+    padding: 5px;
+    align-content:center;
+}
+
+section_3 {
+    display: inline-grid;
+    grid-template-columns: 480px 480px 30px;
+    background-color: white;
+    margin: 5px;
+    padding: 6px;
+}
+
+/*section:nth-of-type(1) {
+    background-color: lemonchiffon;
+}
+
+section:nth-of-type(2) {
+    background-color: lightcyan;
+}
+
+section:nth-of-type(3) {
+    background-color: white;
+}
+
+section:nth-of-type(4) {
+    background-color: lightcyan;
+}
+
+section:nth-of-type(5) {
+    background-color: lightcyan;
+}*/
+
+#ABC {
+    background-image: linear-gradient(45deg,rgb(218,34,255) 30%,#9733ee 90%);
+    padding: 1em;
+    border-radius: 3px;
+    margin: 1em 0;
+    color: #fff;
+}
+
+.col_long {
+    display: flex;
+    background-color: lightgray;
+    color: black;
+    margin: 5px 0;
+    padding: 5px;
+    border-radius: 0px;
+    text-align: left;
+    width: 450px;
+}
+.col_long2 {
+    display: flex;
+    background-color: lightgray;
+    color: black;
+    margin: 5px 0;
+    padding: 5px;
+    border-radius: 0px;
+    text-align: left;
+    width: 450px;
+}
+
+
+.col_short2{
+    display: flex;
+    background-color: white;
+    color: black;
+    margin: 5px 0;
+    padding: 5px;
+    border-radius: 0px;
+    text-align: center;
+    width: 460px;
+}
+
+
+
+div {
+    background-color: lightgray;
+    color: black;
+    margin: 5px;
+    padding: 5px;
+    border-radius: 0px;
+}
+
+.div_white {
+    display: flex;
+    background-color: white;
+    color: black;
+    margin: 5px 0;
+    padding: 15px;
+    border-radius: 0px;
+    text-align: left;
+    width: 10px;
+}
+
+.w {
+    display: flex;
+    background-color: white;
+    color: black;
+    margin: 3px 0;
+    padding: 3px;
+    border-radius: 0px;
+    text-align: left;
+    width: 490px;
+    border-color:gold;
+}
+.w_short {
+    display: flex;
+    background-color: white;
+    color: black;
+    margin: 2px 0;
+    padding: 2px;
+    border-radius: 0px;
+    text-align: left;
+    width: 490px;
+     
+}
+.g {
+    display: flex;
+    background-color: lightgray;
+    color: black;
+    margin: 3px 0;
+    padding: 3px;
+    border-radius: 0px;
+    text-align: left;
+    width: 490px;
+    border-color: gold;
+    border-width:10px;
+}
+.col_short {
+    display: flow;
+    background-color: lightcyan;
+    color: black;
+    margin: 6px 0;
+    padding: 2px;
+    border-radius: 0px;
+    text-align: center;
+    width: 30px;
+}
+
+
+section.est {
+    display: inline-grid;
+    grid-template-columns: 100%;
+    background-color: aliceblue;
+    margin: 20px;
+    padding: 10px;
+    width: 800px;
+}
+
+div.e {
+    background-color: lightblue;
+    color: black;
+    margin: 10px;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+input[type=number] {
+    text-align: right;
+    width: 50px;
+}
+
+.rd {
+    text-align: left;
+    width: 5px;
+    height: 5px;
+}
+
+label {
+    text-align: left;
+    width: 420px;
+}
+    label.short1 {
+        text-align: left;
+        width: 420px;
+    }
+    label.short2 {
+        text-align: left;
+        width: 400px;
+    }
+    label.or {
+        text-align: center;
+        width: 600px;
+        display: inline-block;
+    }
+
+button {
+    width: 80px;
+    height: 30px;
+}
+
+ul.a {
+    list-style-type: circle;
+    font-size: 18px;
+}
+
+ul.b {
+    list-style-type: square;
+    font-size: 18px;
+}
+
+ol.c {
+    list-style-type: upper-roman;
+}
+
+ol.d {
+    list-style-type: lower-alpha;
+}
+
+
+/*table tr:nth-child(odd) td {
+    background: #cccccc;
+}
+
+table tr:nth-child(even) td {
+    background: #ffffff;
+}*/

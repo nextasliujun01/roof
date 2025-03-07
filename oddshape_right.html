@@ -1,0 +1,209 @@
+﻿<!--
+ * Copyright(C) 2023 - 2033 Solarshingle Canada - All Rights Reserved
+ * -->
+<!DOCTYPE html>
+<!--
+<style>
+    .name_wrapper {
+        display: flex;
+        margin: 5px 0;
+        text-align: left;
+    }
+</style> -->
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link rel="stylesheet" href="style_normal_v2.css" />
+</head>
+<body>
+    <p><font size="+1"> &lt <a href="selectshapes.html">Back</a> </font></p>
+    <img src="oddshape_right.jpg" width="700" height="300">
+    <form>
+        The unit of length is inch. <br />
+        <section>
+            <div class="g">
+                <label for="eave"> 1 - Eave Length: </label><br>
+                <input type="number" id="eave" name="eave" value="200" size="20" min="0" required><br>
+            </div>
+            <dir>
+                <label> </label>
+            </dir>
+            <div class="g">
+                <label for="ridge"> 2 - Ridge Length: </label><br>
+                <input type="number" id="ridge" name="ridge" value="600" size="20" min="0" required><br>
+            </div>
+
+            <dir class="w">
+                <label class="short1">  </label><br />
+            </dir>
+            <dir>
+                <label> </label>
+            </dir>
+            <div class="w_short">
+                <label class="short1" for="dropped_eave">4 - Stage Length:</label>
+                <input type="number" id="dropped_eave" name="dropped_eave" value="200" size="20" min="4"><br>
+            </div>
+             
+            
+            <dir class="g">
+                <label>5 - Distance between Eave and Ridge (on roof top):</label><br>
+                <input type="number" id="height_measured_real" name="height_measured_real" value="0" size="20" min="0" required><br>
+            </dir>
+            <dir class="col_short">
+                <label> OR </label>
+            </dir>
+            <div class="g">
+                <label for="height_measured"> 6 - Distance between Eave and Ridge (on ground): </label><br>
+                <input type="number" id="height_measured" name="height_measured" value="200" size="20" min="0" required>
+            </div>
+             
+
+            <dir class="w">
+                <label class="short1">  </label><br />
+            </dir>
+            <dir>
+                <label> </label>
+            </dir>
+            <div class="w_short">
+                <label class="short2" for="pitch_rise"> 7 - Slope of Roof (3-18):</label><br />
+                <input type="number" id="pitch_rise" name="pitch_rise" value="4.0" size="5" min="0"> &nbsp &#47 12
+            </div>
+
+            <dir class="g">
+                 <label>8 - Stage Height (on roof top):</label><br>
+                 <input type="number" id="stage_height_measured_real" name="stage_height_measured_real" value="0" size="20" min="0" required><br>
+            </dir>
+            <dir class="col_short">
+                 <label> OR </label>
+            </dir>
+            <div class="g">
+                <label for="stage_height_measured"> 9 - Stage Height (on ground): </label><br>
+                 <input type="number" id="stage_height_measured" name="stage_height_measured" value="100" size="20" min="0" required>
+            </div>
+
+
+            <table style="background-color:lightgray">
+                <tr>
+                    <td><input type="radio" name="rect_style" id="blend" value="0" checked><label>Blend</label></td>
+                </tr>
+            </table>
+        </section>
+        <p id="demo"><font size="+1">Click the following buttons: "Get Data", "Try" and "Draw", in sequence to obtain the layout</font></p>
+        <button type="button" onclick="read()">Get Data </button>
+        <button type="button" onclick="test()">Try it</button>
+        <button type="button" onclick="draw()">Draw</button>
+        <!--<button type="button" onclick="save_data()" disabled>Save to file</button>-->
+        <button type="button" value="Print" onclick="window.print()">Print</button>
+        <input type="text" id="hidden_label" value="R" hidden ="hidden">  </input>
+        <br><br>
+
+        <label for="num_ss"> Number of Solar Singles : </label>
+        <input type="number" id="num_ss" name="num_ss" style='width:50px;' readonly>
+
+        <label for="perimeter"> Closure in L.F.:  </label>
+        <input type="number" id="perimeter" name="perimeter" style='width:50px;' readonly>
+        <p></p>
+        <label for="num_ms"> Number of Metal Singles : </label>
+        <input type="number" id="num_ms" name="num_ms" style='width:50px;' readonly>
+
+    </form>
+    <!--<p id="draw"><font size="+2">On the layout, the eave is at the bottom and the ridge is at the top</font> </p>-->
+    <canvas id="canvas" height="600" width="1000">
+    </canvas>
+
+</body>
+</html>
+<script type="text/javascript" src="calculate-oddshape_LR.js"></script>
+<script>
+
+    //document.getElementById("eave").addEventListener("change", change_offsets);
+    //document.getElementById("ridge").addEventListener("change", change_offsets);
+    ////document.getElementById("left_offset").addEventListener("change", change_right);
+    //// If right offset changes, need to go back to modify left offset.
+    ////document.getElementById("right_offset").addEventListener("change", change_left);
+
+    document.getElementById("height_measured_real").addEventListener("change", set_height);
+    document.getElementById("height_measured").addEventListener("change", set_height_real);
+    document.getElementById("stage_height_measured_real").addEventListener("change", set_height);
+    document.getElementById("stage_height_measured").addEventListener("change", set_height_real);
+    // set height_measured (ground) to 0, use real height_measured (on roof)
+    function set_height() {
+        var x = document.getElementById("height_measured");
+        x.value = 0;
+        var y = document.getElementById("stage_height_measured");
+        y.value = 0
+        var p = document.getElementById("pitch_rise");
+        p.value = 0; 
+    }
+
+    // Set height_measured_real to 0. Use projected value.
+    function set_height_real() {
+        var x = document.getElementById("height_measured_real");
+        x.value = 0;
+        var y = document.getElementById("stage_height_measured_real");
+        y.value = 0;
+        var p = document.getElementById("pitch_rise");
+        p.value = 4;
+    }
+
+    function change_offsets() {
+        var x = document.getElementById("left_offset");
+        //x.value = x.value.toUpperCase();
+        var e = document.getElementById('eave').value;
+        var r = document.getElementById('ridge').value;
+
+        var temp = Math.abs(Number(e) - Number(r));
+        
+        console.log("temp " + temp);
+        x.value = Math.floor(temp / 2);
+        var r_off = document.getElementById("right_offset");
+        r_off.value = x.value;
+
+    }
+
+    function change_right() {
+        var r_off = document.getElementById("right_offset");
+        var x = document.getElementById("left_offset");
+        console.log("Left " + x.value);
+        var e = document.getElementById('eave').value;
+        var r = document.getElementById('ridge').value;
+
+        var temp = Math.abs(Number(e) - Number(r));
+
+        console.log("temp " + temp);
+        var temp1 = temp - Number(x.value);
+        if (temp1 >= 0) {
+            r_off.value = temp - Number(x.value);
+        }
+        else {
+            alert("Offset cannot be negative! Please check the values of offsets and enter again!");
+            r_off.value = temp / 2;
+            x.value = temp / 2;
+        }
+        
+    }
+
+    function change_left() {
+        var r_off = document.getElementById("right_offset");
+        var l_off = document.getElementById("left_offset");
+        console.log("Left " + l_off.value);
+        var e = document.getElementById('eave').value;
+        var r = document.getElementById('ridge').value;
+
+        var temp = Math.abs(Number(e) - Number(r));
+
+        console.log("temp " + temp);
+        var temp1 = temp - Number(r_off.value);
+        if (temp1 >= 0) {
+            l_off.value = temp - Number(r_off.value);
+        }
+        else {
+            alert("Offset cannot be negative! Please check the values of offsets and enter again!");
+            r_off.value = temp / 2;
+            l_off.value = temp / 2;
+        }
+        
+    }
+</script>
