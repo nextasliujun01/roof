@@ -62,7 +62,7 @@ var cv_sec_total_rows = 0;
 var cv_left_outside = 0; // at current y (height), the width of outside of the roof.
 var cv_right_outside = 0;
 
-
+ 
 
 //var cv_invert_mid_x = 0;
 /// For keep tracking left/right offset input textbox.
