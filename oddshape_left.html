@@ -1,4 +1,4 @@
-﻿<!--
+<!--
  * Copyright(C) 2023 - 2033 Solarshingle Canada - All Rights Reserved
  * -->
 <!DOCTYPE html>
@@ -19,7 +19,7 @@
 </head>
 <body>
     <p><font size="+1"> &lt <a href="selectshapes.html">Back</a> </font></p>
-    <img src="oddshape_left.jpg" width="700" height="300">
+    <img src="oddshape_left_page.jpg" width="700" height="300">
     <form>
         The unit of length is inch. <br />
         <section>
@@ -119,7 +119,8 @@
 <script type="text/javascript" src="calculate-oddshape_LR.js"></script>
 <script>
 
-    //document.getElementById("eave").addEventListener("change", change_offsets);
+    document.getElementById("eave").addEventListener("change", change_eaves);
+    document.getElementById("dropped_eave").addEventListener("change", change_eaves);
     //document.getElementById("ridge").addEventListener("change", change_offsets);
     ////document.getElementById("left_offset").addEventListener("change", change_right);
     //// If right offset changes, need to go back to modify left offset.
@@ -129,6 +130,7 @@
     document.getElementById("height_measured").addEventListener("change", set_height_real);
     document.getElementById("stage_height_measured_real").addEventListener("change", set_height);
     document.getElementById("stage_height_measured").addEventListener("change", set_height_real);
+     
     // set height_measured (ground) to 0, use real height_measured (on roof)
     function set_height() {
         var x = document.getElementById("height_measured");
@@ -147,6 +149,26 @@
         y.value = 0;
         var p = document.getElementById("pitch_rise");
         p.value = 4;
+    }
+
+
+    function change_eaves() {
+        
+        //x.value = x.value.toUpperCase();
+        var e = document.getElementById('eave').value;
+        var r = document.getElementById('ridge').value;
+        var se = document.getElementById('dropped_eave').value;
+        
+        var temp = Math.abs(Number(e) + Number(se));
+
+        console.log("temp " + temp);
+        if (temp > r) {
+            alert("Sum of eaves is greater than ridge! Reset to value of (ridge-eave). ");
+            var tmp = Number(r) - Number(e);
+            var newse = document.getElementById('dropped_eave');
+            newse.value = tmp;
+            
+        }
     }
 
     function change_offsets() {
