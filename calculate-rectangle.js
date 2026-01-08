@@ -1,63 +1,75 @@
 ﻿/// Copyright(C) 2023 - 2033 Solarshingle Canada - All Rights Reserved
 ///Constants of SS
-const ss_width = 55.63;
-const ss_height = 16.73;
-const side_diff = 1; // inch
-const eave_ss_offset = 2;
-const ridge_ss_offset = 13;
-const left_right_ss_offset = 4;
-const metel_cover_height = 13; // this cover is used when ridge < ease.
-const drawing_offset = 10; // to flip the shape. but leave a bit space.
-//// Special offsets for section-style 
-const sec_eave_ss_offset = 2;
-const sec_ridge_ss_offset = 6;
-const sec_left_right_ss_offset = 0.5;
-const sec_min_short_hori_edge = 6;// min horizontal edge length.
-const sec_ms_fix_width = 27.7953; // 706mm
-  
 
-/// global flags
-var g_symmetric = false;
-var g_rectangle = false;
-var g_normal_trapezoidal = false; // normal (top shorter than bottom) vs invert Trapezoidal
-var g_parallelogram = false;
-var g_left_ref_line = false; // the vertical line on the left or right side.
-var g_use_ref_line = false;
-var g_invert_eave_short = false;
-var g_left_offset_positive = false;
-var g_data_is_valid = false;
-var g_max_fit = false; // when it is true, try to fit max num of shingles even it is not symmetric.
-var g_flipped = false;
+///import { SS_CONFIG, SEC_SS_CONFIG, G_FLAG, CV } from './global_struct.js';
+
+ 
+const SS_CONFIG = {
+     ss_width : 55.63,
+     ss_height : 16.73,
+     side_diff : 1, // inch
+     eave_ss_offset : 2,
+     ridge_ss_offset : 13,
+     left_right_ss_offset : 4,
+     metel_cover_height : 13, // this cover is used when ridge < ease.
+     drawing_offset : 10, // to flip the shape. but leave a bit space.
+};
+
+const SEC_SS_CONFIG = {
+    //// Special offsets for section-style 
+    sec_eave_ss_offset: 2,
+    sec_ridge_ss_offset: 6,
+    sec_left_right_ss_offset: 0.5,
+    sec_min_short_hori_edge: 6,// min horizontal edge length.
+    sec_ms_fix_width: 27.7953, // 706mm
+};
 
 
-/// computed values
-var cv_real_height = 1;
-var cv_real_left_side = 1;
-var cv_real_right_side = 1;
-var cv_ref_line_x = 0;
-var cv_left_gap_x = 0;  // left offset length. This value is to help determine the area of SS, 
-                       // it is the hypotenuse of right angle triangle and > left_right_ss_offset.
-var cv_right_gap_x = 0; // right offset length.
-var cv_total_rows = 0;
-var cv_invert_start_y = 0;
-var cv_max_ss_in_row = 0;
-var cv_tilting_offset = 0;
+const G_FLAG = {
+    g_symmetric: false,
+    g_rectangle: false,
+    g_normal_trapezoidal: false, // normal (top shorter than bottom) vs invert Trapezoidal
+    g_parallelogram: false,
+    g_left_ref_line: false, // the vertical line on the left or right side.
+    g_use_ref_line: false,
+    g_invert_eave_short: false,
+    g_left_offset_positive: false,
+    g_data_is_valid: false,
+    g_max_fit: false, // when it is true, try to fit max num of shingles even it is not symmetric.
+    g_flipped: false,
+};
 
-//var cv_mid_x = 0; // The middle point of either eave or ridge of a non-symmetrical shape
-var cv_left_outside = 0; // at current y (height), the width of outside of the roof.
-var cv_right_outside = 0;
-//var cv_invert_mid_x = 0;
+
+const CV = {
+    cv_real_height: 1,
+    cv_real_left_side: 1,
+    cv_real_right_side: 1,
+    cv_ref_line_x: 1,
+    cv_left_gap_x: 1,
+    cv_right_gap_x: 1,
+    cv_total_rows: 1,
+    cv_invert_start_y: 1,
+    cv_max_ss_in_row: 1,
+    cv_tilting_offset: 1,
+    cv_left_outside: 1,
+    cv_right_outside: 1
+};
+ 
+ 
+
+
 /// For keep tracking left/right offset input textbox.
 const read_data_status = {
     left_offset: false,
     right_offset: false
-}
+};
 
 const last_row_info = {
     start_x: 0,
     num_ss: 0
-}
+};
 // Define array of 4 corners. Need to update values in array. 
+// the left-bottom corner is (0,0) in calculation. Only in drawing we need to flip y-axis
 var four_corners = [[0, 1], [2, 3], [4, 5], [6, 7]]; // left-bottom, left-top, right-top, right-bottom. 
 
 var four_ss_corners = [];
@@ -72,15 +84,15 @@ const roof = {
     left_offset: 111, // left_offset + right_offset = ridge-eave (or eave-ridge)
     right_offset: 0,
     height_measured: 220,
-    height_measured_roof:220,
+    height_measured_roof: 220,
     angle: 30, // deg between horizontal line and roof surface.
-    style: 0  // 0--blend, 1--section 1, 2--section 2
-}
+    style: 0  // 0--blend, 1--section 1, 2--section 2  Javascript has no enum type.
+};
 
 
 /// For testing (Try it) button
 function test() {
-    if (g_data_is_valid == false) {
+    if (G_FLAG.g_data_is_valid == false) {
         alert("Data is not valid.. stop");
         return;
     }
@@ -101,30 +113,30 @@ function test() {
     var symm = false;
     symm = check_symmetric(roof);
     console.log("Symmetric check:  " + symm);
-    g_symmetric = symm;
+    G_FLAG.g_symmetric = symm;
     var rect = check_rectangle(roof);
     console.log("Rectangle " + rect);
     
-    g_rectangle = rect;
+    G_FLAG.g_rectangle = rect;
 
     display_inputs(roof);
-    cv_real_height = find_real_height(roof.angle, roof.height_measured, roof.height_measured_roof);
-    console.log("real height " + cv_real_height); 
-    var total_rows = find_total_rows(cv_real_height, eave_ss_offset, ridge_ss_offset);
+    CV.cv_real_height = find_real_height(roof.angle, roof.height_measured, roof.height_measured_roof);
+    console.log("real height " + CV.cv_real_height); 
+    var total_rows = find_total_rows(CV.cv_real_height, SS_CONFIG.eave_ss_offset, SS_CONFIG.ridge_ss_offset);
     console.log("Total rows  " + total_rows);
-    cv_total_rows = total_rows; 
+    CV.cv_total_rows = total_rows; 
 
-    find_real_side_length(cv_real_height, roof);
-    console.log("Real left side length ", cv_real_left_side);
-    console.log("Real right side length ", cv_real_right_side);
+    find_real_side_length(CV.cv_real_height, roof);
+    console.log("Real left side length ", CV.cv_real_left_side);
+    console.log("Real right side length ", CV.cv_real_right_side);
   
     // coordinates are from flipped if any. 
-    find_corner_coord(roof, cv_real_height);
+    find_corner_coord(roof, CV.cv_real_height);
     console.log("Coordinates " + four_corners);
-    console.log("normal or invert shape " + g_normal_trapezoidal);
+    console.log("normal or invert shape " + G_FLAG.g_normal_trapezoidal);
      
 
-    if (g_rectangle) {
+    if (G_FLAG.g_rectangle) {
         if (roof.style == 0) {
             find_rect_ss(roof);
             find_linear_inch();
@@ -159,64 +171,74 @@ function display_inputs(roof) {
 
 /// For calculating final results
 function find_linear_inch() {
-    if (roof.style == 0) {
-        var height = cv_total_rows * ss_height;
-        var width = cv_max_ss_in_row * ss_width;
-        var num_ss = four_ss_corners.length / 8;
-        document.getElementById('num_ss').value = num_ss;
-        document.getElementById('perimeter').value = Math.ceil((2 * height + 2 * width) / 12.0);
+    const CORNER_DIVISOR = 8;
+    let num_ss = four_ss_corners.length / CORNER_DIVISOR;
+
+    // Update shared DOM element
+    document.getElementById('num_ss').value = num_ss;
+
+    if (roof.style === 0) {
+        const height = CV.cv_total_rows * SS_CONFIG.ss_height;
+        const width = CV.cv_max_ss_in_row * SS_CONFIG.ss_width;
+        const perimeter = Math.ceil((2 * height + 2 * width) / 12.0);
+
+        document.getElementById('perimeter').value = perimeter;
         document.getElementById('num_ms').value = 0;
-    }
-    else {
-        var num_ss = four_ss_corners.length / 8;
-        document.getElementById('num_ss').value = num_ss;
-        document.getElementById('perimeter').value = Math.ceil((2 * cv_real_height + 2 * roof.eave) / 12.0);
-        document.getElementById('num_ms').value = four_ms_corners.length / 8;
+    } else {
+        const perimeter = Math.ceil((2 * CV.cv_real_height + 2 * roof.eave) / 12.0);
+        const num_ms = four_ms_corners.length / CORNER_DIVISOR;
+
+        document.getElementById('perimeter').value = perimeter;
+        document.getElementById('num_ms').value = num_ms;
     }
 }
-
+ 
+function push_shingle_rect(arr, left, y1, right, y2) {
+    arr.push(left, y1, left, y2, right, y2, right, y1);
+}
 
 //////// Find Number of SS in each row
 /// Rectangle roof
 function find_rect_ss(roof) {
-    if (g_symmetric == false) {
+    if (G_FLAG.g_symmetric == false) {
         console.log("Only symmetric and rectangle shape can be processed...");
         return;
     }
     // always start from eave side:
-    if (g_rectangle) {
-        console.log("rectangle... ")
-        console.log("total rows " + cv_total_rows);
-
-        var ss_per_row = Math.floor((roof.eave - 2 * left_right_ss_offset) / ss_width);
-        console.log("ss per row " + ss_per_row);
-     
-        cv_max_ss_in_row = ss_per_row;
-        
-        // total ss length
-        var ss_length = ss_per_row * ss_width;
-        var start_x = ((roof.eave - ss_length) / 2);
-        console.log("start x " + start_x);
-        var start_y = eave_ss_offset;
-        for (let row = 0; row < cv_total_rows; row++) {
-            var y1 = (start_y + row * ss_height);
-            var y2 = (y1 + ss_height);
-            for (let col = 0; col < ss_per_row; col++) {
-                var left = (col * ss_width + start_x);
-                console.log("Left " + left);
-                var right = (left+ ss_width);
-                console.log("y1 " + y1);
-                four_ss_corners.push(left, y1, left, y2, right, y2, right, y1);
-                
-                //var p1 =[left, y1]; // bottom left
-                //var p2 = [left, y2]; // top left
-                //var p3 = [right, y2];
-                //var p4 = [right, y1];
-                //four_ss_corners.push([p1, p2, p3, p4]);
-            }
-            console.log("Current coodinate " + four_ss_corners.length);
-        }
+    if (!G_FLAG.g_rectangle) {
+        console.log("Calling wrong function...");
+        return;
     }
+     
+    console.log("rectangle... ");
+    console.log("total rows " + CV.cv_total_rows);
+
+    var ss_per_row = Math.floor((roof.eave - 2 * SS_CONFIG.left_right_ss_offset) / SS_CONFIG.ss_width);
+    console.log("ss per row " + ss_per_row);
+
+    CV.cv_max_ss_in_row = ss_per_row;
+
+    // total ss length
+    var ss_length = ss_per_row * SS_CONFIG.ss_width;
+    var start_x = ((roof.eave - ss_length) / 2);
+    console.log("start x " + start_x);
+    var start_y = SS_CONFIG.eave_ss_offset;
+    for (let row = 0; row < CV.cv_total_rows; row++) {
+        var y1 = (start_y + row * SS_CONFIG.ss_height);
+        var y2 = (y1 + SS_CONFIG.ss_height);
+        for (let col = 0; col < ss_per_row; col++) {
+            var left = (col * SS_CONFIG.ss_width + start_x);
+            console.log("Left " + left);
+            var right = (left + SS_CONFIG.ss_width);
+            console.log("y1 " + y1);
+            
+            // four_ss_corners.push(left, y1, left, y2, right, y2, right, y1);
+            push_shingle_rect(four_ss_corners, left, y1, right, y2);
+        }
+        console.log("Current coodinate " + four_ss_corners.length);
+    }
+    
+ 
 }
 
 /// Add new function to calculate section style, with metal shingles (2 different types)
@@ -226,13 +248,13 @@ function rect_calc_num_of_ss_and_ms(roof, roof_width, ss_per_row_est) {
     var ss_per_row = 0; 
     var ms_num = 0; 
     var right_ms_width = 0; 
-    var ms_width = roof_width - 2 * sec_left_right_ss_offset - ss_per_row_est * ss_width;
-    if (ms_width < sec_min_short_hori_edge) {
+    var ms_width = roof_width - 2 * SEC_SS_CONFIG.sec_left_right_ss_offset - ss_per_row_est * SS_CONFIG.ss_width;
+    if (ms_width < SEC_SS_CONFIG.sec_min_short_hori_edge) {
         ss_per_row = ss_per_row_est - 1;
         
         ms_num = 2; 
-        ms_width = roof_width - 2 * sec_left_right_ss_offset - ss_per_row * ss_width;
-        right_ms_width = ms_width - sec_ms_fix_width; 
+        ms_width = roof_width - 2 * SEC_SS_CONFIG.sec_left_right_ss_offset - ss_per_row * SS_CONFIG.ss_width;
+        right_ms_width = ms_width - SEC_SS_CONFIG.sec_ms_fix_width; 
     }
     else {
         ss_per_row = ss_per_row_est;
@@ -242,76 +264,87 @@ function rect_calc_num_of_ss_and_ms(roof, roof_width, ss_per_row_est) {
 
     return [ss_per_row, ms_num, right_ms_width];
 }
+
+
 /// This function implements the idea given on 2024-05-18.
 /// Two situations will be handled:
-/// If the remaining width for metal shingle is less than 6", remove one SS, and put a fixed width of 706mm metal piece (rectangle) first.
+/// If the remaining width for metal shingle is less than 6", remove one Solar Shingle,
+/// and put a metal piece(rectangle) with fixed width of 706mm first.
 /// then put another metal shingle to cover the rest. 
 function find_section_style_ss_fixed_width(roof) {
     // always start from eave side:
-    if (g_rectangle) {
-        // redo total_rows
-        var sec_cv_total_rows = find_total_rows(cv_real_height, sec_eave_ss_offset, sec_ridge_ss_offset)
-        console.log("rectangle... ")
-        console.log("total rows " + sec_cv_total_rows);
-        //var ss_per_row = 0;
-        var ss_per_row_est = Math.floor((roof.eave - 2 * sec_left_right_ss_offset) / ss_width);
-        console.log("ss per row " + ss_per_row_est);
-        // ms_num is the number of ms, right_ms_width is the width of ms. 
-        // If ms_num == 2, right_ms_width is for the most right one, since another has fixed width
-        let [ss_per_row, ms_num, right_ms_width] = rect_calc_num_of_ss_and_ms(roof, roof.eave, ss_per_row_est);
-        cv_max_ss_in_row = ss_per_row;
+    if (!G_FLAG.g_rectangle) {
+        console.log("Calling wrong function.... ! ");
+        return; 
+    }
+   
+    // redo total_rows
+    var sec_cv_total_rows = find_total_rows(CV.cv_real_height, SEC_SS_CONFIG.sec_eave_ss_offset, SEC_SS_CONFIG.sec_ridge_ss_offset);
+    console.log("rectangle... ");
+    console.log("total rows " + sec_cv_total_rows);
+    //var ss_per_row = 0;
+    var ss_per_row_est = Math.floor((roof.eave - 2 * SEC_SS_CONFIG.sec_left_right_ss_offset) / SS_CONFIG.ss_width);
+    console.log("ss per row " + ss_per_row_est);
 
-        // total ss length
-        //var ss_length = ss_per_row * ss_width;
-        //var ms_length = roof.eave - ss_length - 2.0 * sec_left_right_ss_offset;
-        // style-2 is simple. Just fill right side with metal for each row.
-        if (roof.style > 0) {
-            var start_x = 0;
+    // ms_num is the number of ms (metal shingles), right_ms_width is the width of ms. 
+    // If ms_num == 2, right_ms_width is for the most right one, since another has fixed width
+    let [ss_per_row, ms_num, right_ms_width] = rect_calc_num_of_ss_and_ms(roof, roof.eave, ss_per_row_est);
+    CV.cv_max_ss_in_row = ss_per_row;
+
+    // total ss length
+    //var ss_length = ss_per_row * SS_CONFIG.ss_width;
+    //var ms_length = roof.eave - ss_length - 2.0 * SEC_SS_CONFIG.sec_left_right_ss_offset;
+    // style-2 is simple. Just fill right side with metal for each row.
+    if (roof.style > 0) {
+        var start_x = 0;
+        if (ms_num == 1) {
+            start_x = SEC_SS_CONFIG.sec_left_right_ss_offset; // start from left (0.5 inch)
+        }
+        else if (ms_num == 2) {
+            start_x = SEC_SS_CONFIG.sec_left_right_ss_offset + SEC_SS_CONFIG.sec_ms_fix_width;
+        }
+        // var start_x = SEC_SS_CONFIG.sec_left_right_ss_offset; // start from left (0.5 inch)
+        console.log("start x " + start_x);
+        var start_y = SEC_SS_CONFIG.sec_eave_ss_offset;
+        for (let row = 0; row < sec_cv_total_rows; row++) {
+            var y1 = (start_y + row * SS_CONFIG.ss_height);
+            var y2 = (y1 + SS_CONFIG.ss_height);
+
+            var last_right = 0;
+            for (let col = 0; col < ss_per_row; col++) {
+                var left = (col * SS_CONFIG.ss_width + start_x);
+                console.log("Left " + left);
+                var right = (left + SS_CONFIG.ss_width);
+                console.log("right " + right);
+                push_shingle_rect(four_ss_corners, left, y1, right, y2);
+                //four_ss_corners.push(left, y1, left, y2, right, y2, right, y1);
+                last_right = right;
+                    
+            }
+            // ONLY consider 2 cases for metal shingles:
             if (ms_num == 1) {
-                start_x = sec_left_right_ss_offset; // start from left (0.5 inch)
+                push_shingle_rect(four_ms_corners, last_right, y1, (last_right + right_ms_width), y2);
+                //four_ms_corners.push(last_right, y1, last_right, y2, (last_right + right_ms_width), y2, (last_right + right_ms_width), y1);
             }
             else if (ms_num == 2) {
-                start_x = sec_left_right_ss_offset + sec_ms_fix_width;
-            }
-            // var start_x = sec_left_right_ss_offset; // start from left (0.5 inch)
-            console.log("start x " + start_x);
-            var start_y = sec_eave_ss_offset;
-            for (let row = 0; row < sec_cv_total_rows; row++) {
-                var y1 = (start_y + row * ss_height);
-                var y2 = (y1 + ss_height);
 
-                var last_right = 0
-                for (let col = 0; col < ss_per_row; col++) {
-                    var left = (col * ss_width + start_x);
-                    console.log("Left " + left);
-                    var right = (left + ss_width);
-                    console.log("right " + right);
-                    four_ss_corners.push(left, y1, left, y2, right, y2, right, y1);
-                    last_right = right;
-                    
-                }
-                // ONLY consider 2 cases for metal shingles:
-                if (ms_num == 1) {
-                    four_ms_corners.push(last_right, y1, last_right, y2, (last_right + right_ms_width), y2, (last_right + right_ms_width), y1);
-                }
-                else if (ms_num == 2) {
-
-                    four_ms_corners.push(sec_left_right_ss_offset, y1, sec_left_right_ss_offset, y2,
-                        (sec_left_right_ss_offset + sec_ms_fix_width), y2, (sec_left_right_ss_offset + sec_ms_fix_width), y1);
-                    var end_x = roof.eave - sec_left_right_ss_offset; 
-                    console.log("End X" + end_x);
-                    var t = last_right + right_ms_width;
-                    console.log("last_right plus right_ms_width" + t);
-                    four_ms_corners.push(last_right, y1, last_right, y2, end_x, y2, end_x, y1);
-                }
-                console.log("Current coodinate " + four_ss_corners.length);
+                four_ms_corners.push(SEC_SS_CONFIG.sec_left_right_ss_offset, y1, SEC_SS_CONFIG.sec_left_right_ss_offset, y2,
+                    (SEC_SS_CONFIG.sec_left_right_ss_offset + SEC_SS_CONFIG.sec_ms_fix_width), y2, (SEC_SS_CONFIG.sec_left_right_ss_offset + SEC_SS_CONFIG.sec_ms_fix_width), y1);
+                var end_x = roof.eave - SEC_SS_CONFIG.sec_left_right_ss_offset; 
+                console.log("End X" + end_x);
+                var t = last_right + right_ms_width;
+                console.log("last_right plus right_ms_width" + t);
+                push_shingle_rect(four_ms_corners, last_right, y1, end_x, y2);
+                //four_ms_corners.push(last_right, y1, last_right, y2, end_x, y2, end_x, y1);
             }
-            return sec_cv_total_rows;
+            console.log("Current coodinate " + four_ss_corners.length);
         }
-        else {
-            console.log("ERROR ! Should not use this option to put SS. ")
-        }
+        return sec_cv_total_rows;
     }
+    else {
+        console.log("ERROR ! Should not use this option to put SS. ");
+    }
+     
 }
 
 
@@ -324,103 +357,118 @@ function find_section_style_ss_fixed_width(roof) {
 /// 
 function find_section_style_ss_and_ms_alt(roof) {
     // always start from eave side:
-    if (g_rectangle) {
-        // redo total_rows
-        var sec_cv_total_rows = find_total_rows(cv_real_height, sec_eave_ss_offset, sec_ridge_ss_offset)
-        console.log("rectangle... ")
-        console.log("total rows " + sec_cv_total_rows);
-        //var ss_per_row = 0;
-        var ss_per_row_est = Math.floor((roof.eave - 2 * sec_left_right_ss_offset) / ss_width);
-        console.log("ss per row " + ss_per_row_est);
-        // ms_num is the number of ms, right_ms_width is the width of ms.
-        // If ms_num == 2, right_ms_width is for the most right one, since another has fixed width
-        // NOTE: right_ms_width is for the right most shingle on the row. 
-        // But it can be used for on the left end of the row. 
-        let [ss_per_row, ms_num, right_ms_width] = rect_calc_num_of_ss_and_ms(roof, roof.eave, ss_per_row_est);
-        cv_max_ss_in_row = ss_per_row;
+    if (!G_FLAG.g_rectangle) {
+        console.log(" Wrong Function is called ... ")
+        return;
+    }
+     
+    // Determine total number of rows based on real roof height and configuration offsets
+    var sec_cv_total_rows = find_total_rows(CV.cv_real_height, SEC_SS_CONFIG.sec_eave_ss_offset, SEC_SS_CONFIG.sec_ridge_ss_offset);
+ 
+    console.log("rectangle... ", "total rows", sec_cv_total_rows);
+    // Estimate number of solar shingles (SS) per row
+    var ss_per_row_est = Math.floor((roof.eave - 2 * SEC_SS_CONFIG.sec_left_right_ss_offset) / SS_CONFIG.ss_width);
+    console.log("ss per row " + ss_per_row_est);
+    // ms_num is the number of metal singles, right_ms_width is the width of metal shingle on the right side.
+    // If ms_num == 2, right_ms_width is for the right-most one, since another has fixed width
+    // NOTE: right_ms_width is for the right most shingle on the row. 
+    // But it can be used for on the left end of the row. 
+    const [ss_per_row, ms_num, right_ms_width] = rect_calc_num_of_ss_and_ms(roof, roof.eave, ss_per_row_est);
+    CV.cv_max_ss_in_row = ss_per_row;
 
-        // total ss length
-        //var ss_length = ss_per_row * ss_width;
-        //var ms_length = roof.eave - ss_length - 2.0 * sec_left_right_ss_offset;
-        // style-2 is simple. Just fill right side with metal for each row.
-        if (roof.style > 0) {
-            let  start_x = 0;
-            let  start_x_alt = 0; 
+    // For style-2 is simple. Just fill right side with metal for each row.
+    if (roof.style <= 0) {
+        console.error("ERROR, should not use this option to put SS. ");
+        return; 
+    }
+     
+    let  start_x = 0;
+    let  start_x_alt = 0; 
+    if (ms_num == 1) {
+        start_x = SEC_SS_CONFIG.sec_left_right_ss_offset; // start from left (0.5 inch)
+        start_x_alt = SEC_SS_CONFIG.sec_left_right_ss_offset + right_ms_width;
+    }
+    else if (ms_num == 2) {
+        start_x = SEC_SS_CONFIG.sec_left_right_ss_offset + SEC_SS_CONFIG.sec_ms_fix_width;
+        start_x_alt = SEC_SS_CONFIG.sec_left_right_ss_offset + right_ms_width;
+    }
+    // let  start_x = SEC_SS_CONFIG.sec_left_right_ss_offset; // start from left (0.5 inch)
+    console.log("start x " + start_x);
+    const start_y = SEC_SS_CONFIG.sec_eave_ss_offset;
+    for (let row = 0; row < sec_cv_total_rows; row++) {
+        let  y1 = (start_y + row * SS_CONFIG.ss_height);
+        let  y2 = (y1 + SS_CONFIG.ss_height);
+
+        let last_right = 0;
+        if (row % 2 == 0) { // first row use start_x. 
+            for (let col = 0; col < ss_per_row; col++) {
+                let  left = col * SS_CONFIG.ss_width + start_x;
+                console.log("Left " + left);
+                let  right = (left + SS_CONFIG.ss_width);
+                console.log("right " + right);
+                push_shingle_rect(four_ss_corners, left, y1, right, y2);
+                //four_ss_corners.push(left, y1, left, y2, right, y2, right, y1);
+                last_right = right;
+            }
+
+            // ONLY consider 2 cases for metal shingles:
             if (ms_num == 1) {
-                start_x = sec_left_right_ss_offset; // start from left (0.5 inch)
-                start_x_alt = sec_left_right_ss_offset + right_ms_width;
+                push_shingle_rect(four_ms_corners, last_right, y1, (last_right + right_ms_width), y2);
+                //four_ms_corners.push(last_right, y1, last_right, y2, (last_right + right_ms_width), y2, (last_right + right_ms_width), y1);
             }
             else if (ms_num == 2) {
-                start_x = sec_left_right_ss_offset + sec_ms_fix_width;
-                start_x_alt = sec_left_right_ss_offset + right_ms_width;
-            }
-            // let  start_x = sec_left_right_ss_offset; // start from left (0.5 inch)
-            console.log("start x " + start_x);
-            let  start_y = sec_eave_ss_offset;
-            for (let row = 0; row < sec_cv_total_rows; row++) {
-                let  y1 = (start_y + row * ss_height);
-                let  y2 = (y1 + ss_height);
+                // The first piece has fixed length ()
+                push_shingle_rect(four_ms_corners, SEC_SS_CONFIG.sec_left_right_ss_offset, y1,
+                    (SEC_SS_CONFIG.sec_left_right_ss_offset + SEC_SS_CONFIG.sec_ms_fix_width), y2);
 
-                let  last_right = 0
-                if (row % 2 == 0) { // first row use start_x. 
-                    for (let col = 0; col < ss_per_row; col++) {
-                        let  left = (col * ss_width + start_x);
-                        console.log("Left " + left);
-                        let  right = (left + ss_width);
-                        console.log("right " + right);
-                        four_ss_corners.push(left, y1, left, y2, right, y2, right, y1);
-                        last_right = right;
-                    }
-                    // ONLY consider 2 cases for metal shingles:
-                    if (ms_num == 1) {
-                        four_ms_corners.push(last_right, y1, last_right, y2, (last_right + right_ms_width), y2, (last_right + right_ms_width), y1);
-                    }
-                    else if (ms_num == 2) {
-                        four_ms_corners.push(sec_left_right_ss_offset, y1, sec_left_right_ss_offset, y2,
-                            (sec_left_right_ss_offset + sec_ms_fix_width), y2, (sec_left_right_ss_offset + sec_ms_fix_width), y1);
-                        let  end_x = roof.eave - sec_left_right_ss_offset;
-                        console.log("End X" + end_x);
-                        let  t = last_right + right_ms_width;
-                        console.log("last_right plus right_ms_width" + t);
-                        four_ms_corners.push(last_right, y1, last_right, y2, end_x, y2, end_x, y1);
-                    }
-                }
-                else {
-                    for (let col = 0; col < ss_per_row; col++) {
-                        let  left = (col * ss_width + start_x_alt);
-                        console.log("Left " + left);
-                        let  right = (left + ss_width);
-                        console.log("right " + right);
-                        four_ss_corners.push(left, y1, left, y2, right, y2, right, y1);
-                        last_right = right;
-                    }
-                    // ONLY consider 2 cases for metal shingles:
-                    if (ms_num == 1) { // metal is on the left end.... 
-                        four_ms_corners.push(sec_left_right_ss_offset, y1, sec_left_right_ss_offset, y2, start_x_alt, y2, start_x_alt , y1);
-                    }
-                    else if (ms_num == 2) {
-                        four_ms_corners.push(sec_left_right_ss_offset, y1, sec_left_right_ss_offset, y2, start_x_alt, y2, start_x_alt , y1);
-                        let  end_x = roof.eave - sec_left_right_ss_offset;
-                        console.log("End X" + end_x);
-                        let  t = last_right + right_ms_width;
-                        console.log("last_right plus right_ms_width" + t);
-                        four_ms_corners.push(last_right, y1, last_right, y2, end_x, y2, end_x, y1);
-                    }
-
-                }
-                console.log("Current coodinate " + four_ss_corners.length);
+                //four_ms_corners.push(SEC_SS_CONFIG.sec_left_right_ss_offset, y1, SEC_SS_CONFIG.sec_left_right_ss_offset, y2,
+                //    (SEC_SS_CONFIG.sec_left_right_ss_offset + SEC_SS_CONFIG.sec_ms_fix_width), y2, (SEC_SS_CONFIG.sec_left_right_ss_offset + SEC_SS_CONFIG.sec_ms_fix_width), y1);
+                let  end_x = roof.eave - SEC_SS_CONFIG.sec_left_right_ss_offset;
+                console.log("End X" + end_x);
+                let  t = last_right + right_ms_width;
+                console.log("last_right plus right_ms_width" + t);
+                push_shingle_rect(four_ms_corners, last_right, y1, end_x, y2);
+                //four_ms_corners.push(last_right, y1, last_right, y2, end_x, y2, end_x, y1);
             }
-            return sec_cv_total_rows;
         }
         else {
-            console.log("ERROR ! Should not use this option to put SS. ")
+            for (let col = 0; col < ss_per_row; col++) {
+                let  left = (col * SS_CONFIG.ss_width + start_x_alt);
+                console.log("Left " + left);
+                let  right = (left + SS_CONFIG.ss_width);
+                console.log("right " + right);
+                //four_ss_corners.push(left, y1, left, y2, right, y2, right, y1);
+                push_shingle_rect(four_ss_corners, left, y1, right, y2);
+                last_right = right;
+            }
+            // ONLY consider 2 cases for metal shingles:
+            if (ms_num == 1) { // metal is on the left end.... 
+                push_shingle_rect(four_ms_corners, SEC_SS_CONFIG.sec_left_right_ss_offset, y1, start_x_alt, y2);
+                //four_ms_corners.push(SEC_SS_CONFIG.sec_left_right_ss_offset, y1, SEC_SS_CONFIG.sec_left_right_ss_offset, y2, start_x_alt, y2, start_x_alt , y1);
+            }
+            else if (ms_num == 2) {
+                //four_ms_corners.push(SEC_SS_CONFIG.sec_left_right_ss_offset, y1, SEC_SS_CONFIG.sec_left_right_ss_offset, y2, start_x_alt, y2, start_x_alt , y1);
+                push_shingle_rect(four_ms_corners, SEC_SS_CONFIG.sec_left_right_ss_offset, y1, start_x_alt, y2);
+                let end_x = roof.eave - SEC_SS_CONFIG.sec_left_right_ss_offset;
+                // ms with fixed length is on the right side. 
+                console.log("End X" + end_x);
+                let  t = last_right + right_ms_width;
+                console.log("last_right plus right_ms_width" + t);
+                //four_ms_corners.push(last_right, y1, last_right, y2, end_x, y2, end_x, y1);
+                push_shingle_rect(four_ms_corners, last_right, y1, end_x, y2); 
+            }
+
         }
+        console.log("Current coodinate " + four_ss_corners.length);
     }
+    return sec_cv_total_rows;
 }
+     
+ 
 
 /// Need to use actual height instead of height measured from map. 
 function find_corner_coord(roof, actual_height) {
-    if (g_rectangle) {
+    if (G_FLAG.g_rectangle) {
         four_corners[0][0] = 0;
         four_corners[0][1] = 0;
         four_corners[1][0] = 0;
@@ -431,9 +479,9 @@ function find_corner_coord(roof, actual_height) {
         four_corners[3][1] = 0;
     }
     else {
-        if (g_symmetric) {
+        if (G_FLAG.g_symmetric) {
             if (roof.eave > roof.ridge) {
-                g_normal_trapezoidal = true;
+                G_FLAG.g_normal_trapezoidal = true;
                 // Isosceles Trapezoidal
                 four_corners[0][0] = 0;
                 four_corners[0][1] = 0;
@@ -447,7 +495,7 @@ function find_corner_coord(roof, actual_height) {
                 four_corners[3][1] = 0;
             }
             else {
-                g_normal_trapezoidal = false;
+                G_FLAG.g_normal_trapezoidal = false;
                 four_corners[0][0] = roof.left_offset;
                 four_corners[0][1] = 0;
                 four_corners[1][0] = 0;
@@ -468,7 +516,7 @@ function find_corner_coord(roof, actual_height) {
 ///TODO: merge these two functions
 /// Use height (distance between eave and ridge)
 function find_total_rows(actual_height, bottom_offset, top_offset) { 
-    var total_height = (actual_height - bottom_offset - top_offset) / ss_height;
+    var total_height = (actual_height - bottom_offset - top_offset) / SS_CONFIG.ss_height;
     var total_rows = Math.floor(total_height);
     return total_rows;
 }
@@ -479,7 +527,7 @@ function find_total_rows(actual_height, bottom_offset, top_offset) {
 function check_symmetric(roof) {
     var symmetric = false;
       
-    if (Math.abs(roof.left_offset - roof.right_offset) < side_diff) {
+    if (Math.abs(roof.left_offset - roof.right_offset) < SS_CONFIG.side_diff) {
         symmetric = true;
     }
     else {
@@ -515,27 +563,28 @@ function find_real_height(angle, height_measured, height_measured_real) {
 
 /// Use side_offset and actual height to get real_side_length.
 function find_real_side_length(actual_height, roof) {
-    cv_real_left_side = actual_height;
-    cv_real_right_side = actual_height;
+    CV.cv_real_left_side = actual_height;
+    CV.cv_real_right_side = actual_height;
+    var t = 0;
     if (roof.left_offset > 0) {
-        var t = Math.sqrt(roof.left_offset * roof.left_offset + actual_height * actual_height);
-        cv_real_left_side = Math.floor(t);
+        t = Math.sqrt(roof.left_offset * roof.left_offset + actual_height * actual_height);
+        CV.cv_real_left_side = Math.floor(t);
     }
     if (roof.right_offset > 0) {
-        var t = Math.sqrt(roof.right_offset * roof.right_offset + actual_height * actual_height);
-        cv_real_right_side = Math.floor(t);
+        t = Math.sqrt(roof.right_offset * roof.right_offset + actual_height * actual_height);
+        CV.cv_real_right_side = Math.floor(t);
     }
 }
 
 
 function set_g_variable() {
-    g_symmetric = false;
-    g_rectangle = false;
-    g_normal_trapezoidal = false; // normal (top shorter than bottom) vs invert Trapezoidal
-    g_left_ref_line = false; // the vertical line on the left or right side.
-    g_use_ref_line = false;
-    g_invert_eave_short = false;
-    g_flipped = false;
+    G_FLAG.g_symmetric = false;
+    G_FLAG.g_rectangle = false;
+    G_FLAG.g_normal_trapezoidal = false; // normal (top shorter than bottom) vs invert Trapezoidal
+    G_FLAG.g_left_ref_line = false; // the vertical line on the left or right side.
+    G_FLAG.g_use_ref_line = false;
+    G_FLAG.g_invert_eave_short = false;
+    G_FLAG.g_flipped = false;
 }
  
  
@@ -546,7 +595,7 @@ function draw() {
         
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        var y_upper = cv_real_height + drawing_offset;
+        var y_upper = CV.cv_real_height + SS_CONFIG.drawing_offset;
 
         console.log("height " + canvas.height);
         console.log("y_upper " + y_upper);
@@ -555,12 +604,12 @@ function draw() {
             drawLine(ctx, [four_corners[i][0], y_upper - four_corners[i][1]], [four_corners[(i + 1) % 4][0], y_upper - four_corners[(i+1)%4][1]], 'green', 2);
         }
         //if (!g_max_fit) {
-        //    drawLine(ctx, [cv_ref_line_x, drawing_offset], [cv_ref_line_x, cv_real_height + drawing_offset], 'red', 2);
+        //    drawLine(ctx, [CV.cv_ref_line_x, SS_CONFIG.drawing_offset], [CV.cv_ref_line_x, CV.cv_real_height + SS_CONFIG.drawing_offset], 'red', 2);
         //}
        
-        //drawLine(ctx, [cv_invert_mid_x, drawing_offset], [cv_invert_mid_x, cv_real_height + drawing_offset], 'green', 2);
+        //drawLine(ctx, [cv_invert_mid_x, SS_CONFIG.drawing_offset], [cv_invert_mid_x, CV.cv_real_height + SS_CONFIG.drawing_offset], 'green', 2);
         
-        //drawLine(ctx, [cv_invert_mid_x - ss_width/2, drawing_offset], [cv_invert_mid_x-ss_width/2, cv_real_height + drawing_offset], 'yellow', 2);
+        //drawLine(ctx, [cv_invert_mid_x - SS_CONFIG.ss_width/2, SS_CONFIG.drawing_offset], [cv_invert_mid_x-SS_CONFIG.ss_width/2, CV.cv_real_height + SS_CONFIG.drawing_offset], 'yellow', 2);
         var total = four_ss_corners.length;
         //for (let i = 0; i < total; i=i+2) {
         //    drawCircles(ctx, four_ss_corners[i], four_ss_corners[i + 1], 1);
@@ -588,7 +637,7 @@ function draw() {
                 drawLine(ctx, [four_ms_corners[i * 8 + 6], y_upper - four_ms_corners[i * 8 + 7]], [four_ms_corners[i * 8], y_upper - four_ms_corners[i * 8 + 1]], 'blue', 2);
             }
            
-            var h = ss_height - 2;
+            var h = SS_CONFIG.ss_height - 2;
             for (let i = 0; i < total_ms; i = i + 1) {
                 var x = four_ms_corners[i * 8 + 2]+1;
                 var y = y_upper - four_ms_corners[i * 8 + 3] + 1;
@@ -638,7 +687,7 @@ function drawCircles(ctx, centerX, centerY, radius) {
 /// For Input Data.... 
 function check_input(val) {
     // const regex = new RegExp(/[^0-9]/, 'g');
-    const regex = new RegExp(/^ [+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$/)
+    const regex = new RegExp(/^ [+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$/);
     var status = true;
     if (val.match(regex)) {
         alert("Must be a valid number");
@@ -722,7 +771,7 @@ function check_input(val) {
         }
         pitch_rise_value = Number(pitch_rise);
         if (roof.height_measured == 0) {
-            console.log("@@@ Pitch is set to 0")
+            console.log("@@@ Pitch is set to 0");
             pitch_rise_value = 0;
         }
         else {
@@ -780,10 +829,11 @@ function validate_and_update_data() {
         roof.right_offset = Number(0);
         return;
     }
+    var temp = 0;
     if (Math.abs(diff_offset) > 1) {
         console.log("In validate (), " + read_data_status.left_offset + " ,  " + read_data_status.right_offset); 
         if (read_data_status.left_offset) {
-            var temp = diff - roof.left_offset;
+            temp = diff - roof.left_offset;
             let value = prompt("To ensure left and right offset are correct, enter right offset value ", temp);
             if (value == null || value == "") {
                 text = "User cancelled the prompt";
@@ -796,7 +846,7 @@ function validate_and_update_data() {
             }
         }
         else if (read_data_status.right_offset) { // right offset is set.
-            var temp = diff - roof.right_offset;
+            temp = diff - roof.right_offset;
             let value = prompt("To ensure left and right offset are correct, enter left offset value ", temp);
             if (value == null || value == "") {
                 text = "User cancelled the prompt";
@@ -810,7 +860,7 @@ function validate_and_update_data() {
         }
         else {
             console.log("validate_and_udapte_data() both offsets are not set ");
-            var temp = diff;
+            temp = diff;
             let value = prompt("Program set left offset value as ", temp);
             if (value == null || value == "") {
                 text = "User cancelled the prompt";
@@ -842,15 +892,19 @@ function validate_roof_data_only() {
         else {
             valid = false; 
         }
+
+        console.log(" Rectangle Valid = " + valid);
         return valid;
     }
+    console.log(" Valid = " + valid);
     // Not rectangle: 
     var sum = roof.left_offset + roof.right_offset;
+    var diff = 0;
     if (roof.eave > roof.ridge) {
-        var diff = roof.eave - roof.ridge - sum;
+        diff = roof.eave - roof.ridge - sum;
     }
     else {
-        var diff = roof.ridge - roof.eave - sum;
+        diff = roof.ridge - roof.eave - sum;
     }
     if (diff < 0) {
         alert("Offset is too large!!");
@@ -877,7 +931,7 @@ function validate_roof_data_only() {
             v = validate_roof_data_only();
         }
 
-        g_data_is_valid = v;
+        G_FLAG.g_data_is_valid  = v;
         read_data_status.left_offset = true;
         read_data_status.right_offset = true;
 
@@ -902,4 +956,4 @@ function save_data() {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-        }
+ }
